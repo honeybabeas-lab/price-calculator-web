@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>价格计算器</title>
+    <style>
+        /* 将 sidebar.css 中的所有内容复制粘贴到这里 */
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+            --success-color: #4cc9f0;
+            --danger-color: #f94144;
+            --border-radius: 8px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        /* 调整 body/container 样式以适应手机全屏显示 */
+        body {
+            width: 100%;
+            /* 手机端可能不需要 100vh，让内容自然延伸 */
+            min-height: 100vh; 
+            background: #f8f9fa;
+        }
+
+        /* 移除 body 的 overflow: hidden 和 height: 100vh; */
+        /* 关键：让计算器占据屏幕可见区域，或只保留布局样式 */
+        .calculator-sidebar {
+            height: auto; /* 适应内容 */
+            min-height: 100vh; /* 确保在内容少时也能占据全屏 */
+            width: 100%; /* 全屏宽度 */
+            display: flex;
+            flex-direction: column;
+            box-shadow: none; /* 移除侧边栏阴影 */
+        }
+        
+        /* 其他 CSS 保持不变... (从 sidebar.css 复制剩余部分) */
+        
+        .sidebar-header {
+            padding: 15px 20px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .sidebar-header h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        /* 网页版中移除关闭按钮或改变其功能 */
+        #close-sidebar {
+            /* 在独立网页中，这个按钮通常用于返回或隐藏，
+               但这里我们暂时让它保持原样或隐藏 */
+            display: none; /* 网页版通常不需要关闭计算器本身 */
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            line-height: 1;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        
+        #close-sidebar:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+        
+        .sidebar-content {
+            flex-grow: 1;
+            padding: 20px;
+            /* 移除 overflow-y: auto; 依赖 body 的滚动 */
+        }
+        
+        .recommended-price {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #e6f0ff;
+            border-radius: var(--border-radius);
+            border: 1px solid #cce0ff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .recommended-price h3 {
+            font-size: 1rem;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        
+        .price-amount {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--secondary-color);
+            letter-spacing: 1px;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+        
+        .calculate-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.1s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .calculate-btn:hover {
+            background: var(--secondary-color);
+        }
+        
+        .calculate-btn:active {
+            transform: translateY(1px);
+        }
+        
+        .calculate-btn .icon {
+            margin-right: 8px;
+        }
+        
+        .results-container {
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .result-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .result-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        .result-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #212529;
+        }
+        
+        .profit-positive {
+            color: #28a745;
+        }
+        
+        .profit-negative {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator-sidebar">
+        <div class="sidebar-header">
+            <h2>₩ 韩币价格计算器</h2>
+            <button id="close-sidebar" style="display: none;">×</button> 
+        </div>
+        
+        <div class="sidebar-content">
+            <div class="recommended-price">
+                <h3>推荐定价 (韩币)</h3>
+                <div class="price-amount" id="recommended-price-krw">₩ 0</div>
+            </div>
+            
+            <div class="input-group">
+                <label for="cost">单品成本 (元)</label>
+                <input type="number" id="cost" value="10" step="0.1">
+            </div>
+            
+            <div class="input-group">
+                <label for="weight">单个重量 (克)</label>
+                <input type="number" id="weight" value="200">
+            </div>
+            
+            <div class="input-group">
+                <label for="quantity">产品个数</label>
+                <input type="number" id="quantity" value="10">
+            </div>
+            
+            <div class="input-group">
+                <label for="domestic-shipping">国内运费 (元)</label>
+                <input type="number" id="domestic-shipping" value="10">
+            </div>
+            
+            <div class="input-group">
+                <label for="simple-fee">简易费 (元)</label>
+                <input type="number" id="simple-fee" value="15">
+            </div>
+            
+            <div class="input-group">
+                <label for="package-quantity">包裹数量 (个)</label>
+                <input type="number" id="package-quantity" value="1">
+            </div>
+            
+            <div class="input-group">
+                <label for="actual-price-krw">实际定价 (韩元)</label>
+                <input type="number" id="actual-price-krw" value="0" step="100">
+            </div>
+            
+            <button class="calculate-btn" id="calculate-btn">
+                <span class="icon">📊</span> 计算价格与利润
+            </button>
+            
+            <div class="results-container">
+                <div class="result-item">
+                    <span class="result-label">国际运费 (元):</span>
+                    <span class="result-value" id="international-shipping">0.00</span>
+                </div>
+                
+                <div class="result-item">
+                    <span class="result-label">分单运费 (元):</span>
+                    <span class="result-value" id="split-shipping">0.00</span>
+                </div>
+                
+                <div class="result-item">
+                    <span class="result-label">理想利润 (元):</span>
+                    <span class="result-value" id="ideal-profit">0.00</span>
+                </div>
+                
+                <div class="result-item">
+                    <span class="result-label">实际利润 (元):</span>
+                    <span class="result-value" id="actual-profit">0.00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 将 sidebar.js 的内容复制粘贴到这里，并进行修改
+        
+        // 汇率常量
+        const EXCHANGE_RATE = 190;
+
+        // DOM加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCalculator();
+            setupEventListeners();
+        });
+
+        function initializeCalculator() {
+            // **【删除或修改】** 侧边栏关闭逻辑
+            // 网页版不再需要通过 postMessage 通知父级关闭，
+            // 因此可以删除 document.getElementById('close-sidebar')... 的代码。
+            
+            // 初始计算
+            calculatePrice();
+        }
+
+        function setupEventListeners() {
+            // 为所有输入字段添加实时计算
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('input', calculatePrice);
+            });
+            
+            // 计算按钮
+            document.getElementById('calculate-btn').addEventListener('click', calculatePrice);
+        }
+
+        // calculatePrice 函数保持不变
+        function calculatePrice() {
+            // 获取输入值
+            const cost = parseFloat(document.getElementById('cost').value) || 0;
+            const weight = parseFloat(document.getElementById('weight').value) || 0;
+            const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+            const domesticShipping = parseFloat(document.getElementById('domestic-shipping').value) || 0;
+            const simpleFee = parseFloat(document.getElementById('simple-fee').value) || 0;
+            const packageQuantity = parseFloat(document.getElementById('package-quantity').value) || 0;
+            const actualPriceKrw = parseFloat(document.getElementById('actual-price-krw').value) || 0;
+            
+            // 计算国际运费
+            const internationalShipping = 30 + (weight * quantity / 1000) * 5 + simpleFee;
+            
+            // 计算分单运费
+            const splitShipping = packageQuantity > 1 ? (packageQuantity - 1) * 30 : 0;
+            
+            // 计算理想利润
+            const idealProfit = (cost * quantity + domesticShipping) * 0.7;
+            
+            // 计算推荐定价（人民币）
+            const recommendedPriceCny = (idealProfit + cost * quantity + domesticShipping + internationalShipping + splitShipping) * 1.08 / quantity;
+            
+            // 计算推荐定价（韩币）
+            const recommendedPriceKrw = recommendedPriceCny * EXCHANGE_RATE;
+            
+            // 计算实际利润
+            const actualProfit = actualPriceKrw * quantity * 0.92 / EXCHANGE_RATE - cost * quantity - domesticShipping - internationalShipping - splitShipping;
+            
+            // 更新UI
+            updateUI(internationalShipping, splitShipping, idealProfit, recommendedPriceKrw, actualProfit);
+        }
+
+        // updateUI 函数保持不变
+        function updateUI(internationalShipping, splitShipping, idealProfit, recommendedPriceKrw, actualProfit) {
+            document.getElementById('international-shipping').textContent = internationalShipping.toFixed(2);
+            document.getElementById('split-shipping').textContent = splitShipping.toFixed(2);
+            document.getElementById('ideal-profit').textContent = idealProfit.toFixed(2);
+            document.getElementById('recommended-price-krw').textContent = '₩ ' + Math.round(recommendedPriceKrw).toLocaleString();
+            
+            const actualProfitElement = document.getElementById('actual-profit');
+            actualProfitElement.textContent = actualProfit.toFixed(2);
+            
+            // 根据利润正负设置颜色
+            if (actualProfit >= 0) {
+                actualProfitElement.className = 'result-value profit-positive';
+            } else {
+                actualProfitElement.className = 'result-value profit-negative';
+            }
+        }
+    </script>
+</body>
+</html>
